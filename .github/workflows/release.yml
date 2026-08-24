@@ -1,0 +1,57 @@
+name: Build and Release Extension
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch: {}
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Copy Monaco editor assets
+        run: |
+          mkdir -p public/monaco/min
+          cp -r node_modules/monaco-editor/min/vs public/monaco/min/vs
+
+      - name: Type-check and build
+        run: npm run build
+
+      - name: Package with web-ext
+        run: npx web-ext build --source-dir=dist --artifacts-dir=web-ext-artifacts --overwrite-dest
+
+      - name: Get version from package.json
+        id: version
+        run: echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Chromium Customizer ${{ github.ref_name }}
+          files: web-ext-artifacts/*.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chromium-customizer-dist
+          path: dist/
+          retention-days: 30
