@@ -52,30 +52,46 @@ browser.storage.onChanged.addListener(() => {
   getRulesCached(true);
 });
 
-browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+interface GetRuleMessage {
+  type: 'GET_RULE';
+  url: string;
+}
+
+interface SaveLiveCssMessage {
+  type: 'SAVE_LIVE_CSS';
+  hostname: string;
+  css: string;
+}
+
+type Message = GetRuleMessage | SaveLiveCssMessage | { type: string };
+
+browser.runtime.onMessage.addListener((message: Message) => {
   if (message?.type === 'GET_RULE') {
-    getRulesCached().then((rules) => {
-      const hostname = new URL(message.url).hostname.replace(/^www\./, '');
+    const msg = message as GetRuleMessage;
+    return getRulesCached().then((rules) => {
+      const hostname = new URL(msg.url).hostname.replace(/^www\./, '');
       const key = matchRule(rules, hostname);
-      sendResponse(key ? rules[key] : null);
+      return key ? rules[key] : null;
     });
-    return true;
   }
+
   if (message?.type === 'SAVE_LIVE_CSS') {
-    getRulesCached().then(async (rules) => {
+    const msg = message as SaveLiveCssMessage;
+    return getRulesCached().then(async (rules) => {
       const updated = {
         ...rules,
-        [message.hostname]: {
-          ...(rules[message.hostname] || { enabled: true }),
-          css: message.css,
+        [msg.hostname]: {
+          ...(rules[msg.hostname] || { enabled: true }),
+          css: msg.css,
           updatedAt: Date.now(),
         },
       };
       await browser.storage.sync.set({ site_customizer_rules: updated });
-      sendResponse({ ok: true });
+      return { ok: true };
     });
-    return true;
   }
+
+  return undefined;
 });
 
 browser.commands.onCommand.addListener(async (command) => {
