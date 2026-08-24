@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Chromium Customizer",
+  "version": "1.0.0",
+  "description": "Per-site CSS/JS injection with Monaco editor and live DevTools-style editor",
+  "default_locale": "en",
+  "icons": {
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  },
+  "permissions": ["storage", "scripting", "activeTab", "commands"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": false,
+      "match_about_blank": false
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Chromium Customizer",
+    "default_icon": {
+      "48": "icon-48.png",
+      "128": "icon-128.png"
+    }
+  },
+  "options_page": "options.html",
+  "commands": {
+    "open-live-editor": {
+      "suggested_key": { "default": "Ctrl+Shift+E", "mac": "MacCtrl+Shift+E" },
+      "description": "Open live CSS/JS editor on current page"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["monaco/**/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
