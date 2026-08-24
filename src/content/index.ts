@@ -1,4 +1,5 @@
 import browser from 'webextension-polyfill';
+import { togglePicker } from './elementPicker';
 
 interface SiteRule {
   css?: string;
@@ -93,7 +94,7 @@ function createLiveEditor() {
   [cssTa, jsTa].forEach((ta) => {
     ta.style.cssText = 'flex:1; background:#1e1e1e; color:#d4d4d4; border:none; outline:none; padding:12px; resize:none; font:inherit; line-height:1.5; width:100%;';
   });
-  cssTa.placeholder = '/* Write CSS here, applies live */';
+  cssTa.placeholder = '/* Write CSS here, applies live. Use the Element Picker (Ctrl+Shift+X) to auto-generate rules. */';
   jsTa.placeholder = '// Write JS here, click Run to execute';
   jsTa.style.display = 'none';
 
@@ -122,6 +123,11 @@ function createLiveEditor() {
   const footer = document.createElement('div');
   footer.style.cssText = 'padding:8px; border-top:1px solid #333; display:flex; gap:8px; justify-content:flex-end; background:#252526;';
 
+  const pickerBtn = document.createElement('button');
+  pickerBtn.textContent = '\u{1F3AF} Element Picker';
+  pickerBtn.style.cssText = 'padding:6px 12px; background:#8957e5; color:#fff; border:none; border-radius:4px; cursor:pointer; font-family:inherit;';
+  pickerBtn.onclick = () => togglePicker();
+
   const runBtn = document.createElement('button');
   runBtn.textContent = 'Run JS';
   runBtn.style.cssText = 'padding:6px 12px; background:#f78166; color:#161b22; border:none; border-radius:4px; cursor:pointer; font-family:inherit;';
@@ -146,6 +152,7 @@ function createLiveEditor() {
   };
 
   footer.appendChild(clearBtn);
+  footer.appendChild(pickerBtn);
   footer.appendChild(runBtn);
   footer.appendChild(saveBtn);
 
@@ -169,7 +176,6 @@ function createLiveEditor() {
     }, 150);
   });
 
-  // Load previously saved CSS for this domain into the editor
   browser.runtime.sendMessage({ type: 'GET_RULE', url: location.href }).then((rule: SiteRule | null) => {
     if (rule?.css) {
       cssTa.value = rule.css;
@@ -177,7 +183,13 @@ function createLiveEditor() {
     }
   });
 
-  // Draggable header
+  browser.runtime.onMessage.addListener((message: { type?: string; css?: string }) => {
+    if (message?.type === 'CSS_APPENDED' && livePanel) {
+      cssTa.value = (cssTa.value ? cssTa.value + '\n' : '') + (message.css || '');
+      if (liveStyleEl) liveStyleEl.textContent = cssTa.value;
+    }
+  });
+
   let dragging = false;
   let offsetX = 0;
   let offsetY = 0;
@@ -197,15 +209,20 @@ function createLiveEditor() {
   document.addEventListener('mouseup', () => { dragging = false; });
 }
 
-browser.runtime.onMessage.addListener((message) => {
+browser.runtime.onMessage.addListener((message: { type?: string }) => {
   if (message?.type === 'OPEN_LIVE_EDITOR') {
     toggleLiveEditor();
   }
+  if (message?.type === 'OPEN_ELEMENT_PICKER') {
+    togglePicker();
+  }
 });
 
-// Also allow triggering via keyboard directly on the page (fallback if command API is throttled)
 document.addEventListener('keydown', (e) => {
   if (e.ctrlKey && e.shiftKey && e.key.toUpperCase() === 'E') {
     toggleLiveEditor();
+  }
+  if (e.ctrlKey && e.shiftKey && e.key.toUpperCase() === 'X') {
+    togglePicker();
   }
 });

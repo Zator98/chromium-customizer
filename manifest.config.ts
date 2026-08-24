@@ -5,7 +5,7 @@ export default defineManifest({
   manifest_version: 3,
   name: 'Chromium Customizer',
   version: pkg.version,
-  description: 'Per-site CSS/JS injection with Monaco editor and live DevTools-style editor',
+  description: 'Per-site CSS/JS injection with Monaco editor, live DevTools-style editor, and point-and-click element picker',
   icons: {
     '16': 'icon16.png',
     '48': 'icon48.png',
@@ -40,6 +40,10 @@ export default defineManifest({
     'open-live-editor': {
       suggested_key: { default: 'Ctrl+Shift+E', mac: 'MacCtrl+Shift+E' },
       description: 'Open live CSS/JS editor on current page',
+    },
+    'open-element-picker': {
+      suggested_key: { default: 'Ctrl+Shift+X', mac: 'MacCtrl+Shift+X' },
+      description: 'Open point-and-click element picker',
     },
   },
   web_accessible_resources: [

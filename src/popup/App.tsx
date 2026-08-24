@@ -48,6 +48,15 @@ export function App() {
     });
   };
 
+  const openElementPicker = () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.id) {
+        chrome.tabs.sendMessage(tabs[0].id, { type: 'OPEN_ELEMENT_PICKER' });
+        window.close();
+      }
+    });
+  };
+
   if (loading) return <div className="loading">Loading\u2026</div>;
 
   return (
@@ -73,6 +82,7 @@ export function App() {
         </div>
       )}
       <div className="actions">
+        <button onClick={openElementPicker} className="picker">\u{1F3AF} Element Picker</button>
         <button onClick={openLiveEditor} className="secondary">Open Live Editor on Page</button>
         <button onClick={toggle} className={activeRule?.enabled ? 'primary' : 'secondary'}>
           {activeRule?.enabled ? 'Disable' : 'Enable'} for this site
@@ -80,7 +90,7 @@ export function App() {
         <button onClick={openOptions}>Open Options</button>
       </div>
       <footer>
-        <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> to open live editor on page
+        <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd> element picker \u00b7 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> live editor
       </footer>
     </div>
   );
