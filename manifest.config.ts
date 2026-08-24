@@ -6,7 +6,6 @@ export default defineManifest({
   name: 'Chromium Customizer',
   version: pkg.version,
   description: 'Per-site CSS/JS injection with Monaco editor and live DevTools-style editor',
-  default_locale: 'en',
   icons: {
     '16': 'icon16.png',
     '48': 'icon48.png',
