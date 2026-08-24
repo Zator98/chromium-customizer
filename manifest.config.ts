@@ -8,8 +8,9 @@ export default defineManifest({
   description: 'Per-site CSS/JS injection with Monaco editor and live DevTools-style editor',
   default_locale: 'en',
   icons: {
-    '48': 'icon-48.png',
-    '128': 'icon-128.png',
+    '16': 'icon16.png',
+    '48': 'icon48.png',
+    '128': 'icon128.png',
   },
   permissions: ['storage', 'scripting', 'activeTab', 'commands'],
   host_permissions: ['<all_urls>'],
@@ -30,8 +31,9 @@ export default defineManifest({
     default_popup: 'src/popup/index.html',
     default_title: 'Chromium Customizer',
     default_icon: {
-      '48': 'icon-48.png',
-      '128': 'icon-128.png',
+      '16': 'icon16.png',
+      '48': 'icon48.png',
+      '128': 'icon128.png',
     },
   },
   options_page: 'src/options/index.html',
