@@ -63,7 +63,13 @@ interface SaveLiveCssMessage {
   css: string;
 }
 
-type Message = GetRuleMessage | SaveLiveCssMessage | { type: string };
+interface AppendLiveCssMessage {
+  type: 'APPEND_LIVE_CSS';
+  hostname: string;
+  css: string;
+}
+
+type Message = GetRuleMessage | SaveLiveCssMessage | AppendLiveCssMessage | { type: string };
 
 browser.runtime.onMessage.addListener((message: Message) => {
   if (message?.type === 'GET_RULE') {
@@ -91,14 +97,41 @@ browser.runtime.onMessage.addListener((message: Message) => {
     });
   }
 
+  if (message?.type === 'APPEND_LIVE_CSS') {
+    const msg = message as AppendLiveCssMessage;
+    return getRulesCached().then(async (rules) => {
+      const existing = rules[msg.hostname]?.css || '';
+      const combined = existing ? `${existing}\n${msg.css}` : msg.css;
+      const updated = {
+        ...rules,
+        [msg.hostname]: {
+          ...(rules[msg.hostname] || { enabled: true }),
+          css: combined,
+          updatedAt: Date.now(),
+        },
+      };
+      await browser.storage.sync.set({ site_customizer_rules: updated });
+
+      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+      if (tabs[0]?.id) {
+        browser.tabs.sendMessage(tabs[0].id, { type: 'CSS_APPENDED', css: msg.css }).catch(() => {});
+      }
+
+      return { ok: true };
+    });
+  }
+
   return undefined;
 });
 
 browser.commands.onCommand.addListener(async (command) => {
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) return;
+
   if (command === 'open-live-editor') {
-    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-    if (tab?.id) {
-      browser.tabs.sendMessage(tab.id, { type: 'OPEN_LIVE_EDITOR' });
-    }
+    browser.tabs.sendMessage(tab.id, { type: 'OPEN_LIVE_EDITOR' });
+  }
+  if (command === 'open-element-picker') {
+    browser.tabs.sendMessage(tab.id, { type: 'OPEN_ELEMENT_PICKER' });
   }
 });
